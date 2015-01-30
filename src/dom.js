@@ -199,7 +199,7 @@ var View = DOM.View = Backbone.View.extend({
     if (options.template) {
       this.template = options.template;
     }
-    this.children = {};
+    this._children = {};
     this._super.apply(this, arguments);
   },
 
@@ -339,10 +339,10 @@ var View = DOM.View = Backbone.View.extend({
   },
 
   attachChildren() {
-    _.each(this._regions, function(view, region) {
-      var el = utils.querySelector(this.el, regions[region]);
+    _.each(this._children, function(view, region) {
+      var el = utils.querySelector(this.el, this._regions[region]);
       view.attach(el);
-    });
+    }, this);
 
     return this;
   },
@@ -393,7 +393,7 @@ var View = DOM.View = Backbone.View.extend({
   },
 
   detachChildren() {
-    _.invoke(this._regions, 'detach');
+    _.invoke(this._children, 'detach');
     return this;
   },
 
