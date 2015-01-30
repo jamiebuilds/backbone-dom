@@ -166,6 +166,10 @@ var utils = DOM.utils = {
       var parentNode = utils.parentNode(node);
       parentNode.removeChild(node);
     }
+  },
+
+  querySelector(node, selector) {
+    return node.querySelector(selector);
   }
 };
 
@@ -192,9 +196,7 @@ var utils = DOM.utils = {
 var View = DOM.View = Backbone.View.extend({
 
   constructor(options = {}) {
-    if (options.template) {
-      this.template = options.template;
-    }
+    this.children = {};
     this._super.apply(this, arguments);
   },
 
@@ -263,6 +265,8 @@ var View = DOM.View = Backbone.View.extend({
     // Insert new DOM.
     utils.innerHTML(this.el, html);
 
+    this._regions = _.result(this, 'regions');
+
     // Attach only when it was previously in the DOM.
     if (parentNode && !this._isAttached) {
       this.attach(parentNode, nextSibling);
@@ -318,6 +322,8 @@ var View = DOM.View = Backbone.View.extend({
       utils.appendChild(parentNode, this.el);
     }
 
+    this.attachChildren();
+
     // Mark the view as attached.
     this._isAttached = true;
 
@@ -325,6 +331,15 @@ var View = DOM.View = Backbone.View.extend({
      * @event DOM.View#attach
      */
     this.triggerMethod('attach');
+
+    return this;
+  },
+
+  attachChildren() {
+    _.each(this._regions, function(view, region) {
+      var el = utils.querySelector(this.el, regions[region]);
+      view.attach(el);
+    });
 
     return this;
   },
@@ -361,6 +376,8 @@ var View = DOM.View = Backbone.View.extend({
     // Remove the element from the DOM.
     utils.remove(this.el);
 
+    this.detachChildren();
+
     // Mark the view as detached
     this._isAttached = false;
 
@@ -369,6 +386,11 @@ var View = DOM.View = Backbone.View.extend({
      */
     this.triggerMethod('detach');
 
+    return this;
+  },
+
+  detachChildren() {
+    _.invoke(this._regions, 'detach');
     return this;
   },
 
@@ -468,6 +490,14 @@ var View = DOM.View = Backbone.View.extend({
     return {
       items: _.map(collection.models, this.serializeModel, this)
     };
+  },
+
+  insertChild(region, view) {
+    this._children[region] = view;
+  },
+
+  removeChild(region) {
+    this._children[region] = null;
   },
 
   /**
