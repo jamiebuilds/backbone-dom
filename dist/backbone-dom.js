@@ -179,6 +179,10 @@
         var parentNode = utils.parentNode(node);
         parentNode.removeChild(node);
       }
+    },
+  
+    querySelector: function(node, selector) {
+      return node.querySelector(selector);
     }
   };
   
@@ -211,6 +215,7 @@
       if (options.template) {
         this.template = options.template;
       }
+      this.children = {};
       this._super.apply(this, arguments);
     },
   
@@ -279,6 +284,8 @@
       // Insert new DOM.
       utils.innerHTML(this.el, html);
   
+      this._regions = _.result(this, 'regions');
+  
       // Attach only when it was previously in the DOM.
       if (parentNode && !this._isAttached) {
         this.attach(parentNode, nextSibling);
@@ -334,6 +341,8 @@
         utils.appendChild(parentNode, this.el);
       }
   
+      this.attachChildren();
+  
       // Mark the view as attached.
       this._isAttached = true;
   
@@ -341,6 +350,15 @@
        * @event DOM.View#attach
        */
       this.triggerMethod('attach');
+  
+      return this;
+    },
+  
+    attachChildren: function() {
+      _.each(this._regions, function(view, region) {
+        var el = utils.querySelector(this.el, regions[region]);
+        view.attach(el);
+      });
   
       return this;
     },
@@ -377,6 +395,8 @@
       // Remove the element from the DOM.
       utils.remove(this.el);
   
+      this.detachChildren();
+  
       // Mark the view as detached
       this._isAttached = false;
   
@@ -385,6 +405,11 @@
        */
       this.triggerMethod('detach');
   
+      return this;
+    },
+  
+    detachChildren: function() {
+      _.invoke(this._regions, 'detach');
       return this;
     },
   
@@ -484,6 +509,14 @@
       return {
         items: _.map(collection.models, this.serializeModel, this)
       };
+    },
+  
+    insertChild: function(region, view) {
+      this._children[region] = view;
+    },
+  
+    removeChild: function(region) {
+      this._children[region] = null;
     },
   
     /**
