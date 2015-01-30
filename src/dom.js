@@ -196,6 +196,9 @@ var utils = DOM.utils = {
 var View = DOM.View = Backbone.View.extend({
 
   constructor(options = {}) {
+    if (options.template) {
+      this.template = options.template;
+    }
     this.children = {};
     this._super.apply(this, arguments);
   },
